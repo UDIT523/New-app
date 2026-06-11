@@ -33,35 +33,104 @@ function App() {
     );
   }, [groups]);
 
-  const updateQuantity = (
-    groupId,
-    itemId,
-    quantity
-  ) => {
-    setGroups(
-      groups.map((group) => {
-        if (group.id !== groupId) return group;
+const updateRecord = (
+  groupId,
+  itemId,
+  date,
+  qty
+) => {
+  setGroups((prev) =>
+    prev.map((group) => {
+      if (group.id !== groupId)
+        return group;
 
-        return {
-          ...group,
-          items: group.items.map((item) =>
-            item.id === itemId
-              ? { ...item, quantity }
-              : item
-          ),
-        };
-      })
+      return {
+        ...group,
+        items: group.items.map((item) => {
+          if (item.id !== itemId)
+            return item;
+
+          const existing =
+            item.records.findIndex(
+              (r) => r.date === date
+            );
+
+          if (existing >= 0) {
+            return {
+              ...item,
+              records: item.records.map(
+                (r, index) =>
+                  index === existing
+                    ? {
+                        ...r,
+                        qty,
+                      }
+                    : r
+              ),
+            };
+          }
+
+          return {
+            ...item,
+            records: [
+              ...item.records,
+              {
+                date,
+                qty,
+              },
+            ],
+          };
+        }),
+      };
+    })
+  );
+};
+
+const addDateColumn = (groupId) => {
+  const today =
+    new Date().toLocaleDateString(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
     );
-  };
+
+  setGroups((prev) =>
+    prev.map((group) => {
+      if (group.id !== groupId)
+        return group;
+
+      const alreadyExists =
+        group.recordDates?.includes(
+          today
+        );
+
+      if (alreadyExists)
+        return group;
+
+      return {
+        ...group,
+        recordDates: [
+          ...(group.recordDates ||
+            []),
+          today,
+        ],
+      };
+    })
+  );
+};
 
   const addGroup = () => {
     if (!groupName.trim()) return;
 
     const newGroup = {
-      id: Date.now(),
-      name: groupName,
-      items: [],
-    };
+  id: Date.now(),
+  name: groupName,
+  items: [],
+  recordDates: [],
+};
 
     setGroups([...groups, newGroup]);
 
@@ -89,12 +158,12 @@ function App() {
           items: [
             ...group.items,
             {
-              id: Date.now(),
-              name: itemData.name,
-              quantity: 0,
-              reorder: Number(itemData.reorder),
-              unit: itemData.unit,
-            },
+  id: Date.now(),
+  name: itemData.name,
+  reorder: Number(itemData.reorder),
+  unit: itemData.unit,
+  records: [],
+}
           ],
         };
       })
@@ -310,9 +379,10 @@ const importFromExcel = (event) => {
       </div>
 
       <GroupTable
-        groups={groups}
-        updateQuantity={updateQuantity}
-      />
+  groups={groups}
+  updateRecord={updateRecord}
+  addDateColumn={addDateColumn}
+/>
 
       <button onClick={saveStock}>
         Save Stock

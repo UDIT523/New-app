@@ -2,10 +2,14 @@ import { useState } from "react";
 
 export default function GroupTable({
   groups,
-  updateQuantity,
+  updateRecord,
+  addDateColumn,
 }) {
-  const [openGroups, setOpenGroups] = useState({});
-  const [editingGroups, setEditingGroups] = useState({});
+  const [openGroups, setOpenGroups] =
+    useState({});
+
+  const [editingGroups, setEditingGroups] =
+    useState({});
 
   const toggleGroup = (groupId) => {
     setOpenGroups((prev) => ({
@@ -15,22 +19,7 @@ export default function GroupTable({
   };
 
   const startRecording = (groupId) => {
-    const today = new Date().toLocaleDateString(
-      "en-GB",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    );
-
-    const group = groups.find(
-      (g) => g.id === groupId
-    );
-
-    if (group) {
-      group.recordDate = today;
-    }
+    addDateColumn(groupId);
 
     setEditingGroups((prev) => ({
       ...prev,
@@ -49,139 +38,190 @@ export default function GroupTable({
 
   return (
     <>
-      {groups.map((group) => (
-        <div
-          key={group.id}
-          style={{
-            marginBottom: "25px",
-          }}
-        >
-          <h2
+      {groups.map((group) => {
+        const dates =
+          group.recordDates || [];
+
+        const latestDate =
+          dates[dates.length - 1];
+
+        return (
+          <div
+            key={group.id}
             style={{
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
+              marginBottom: "30px",
             }}
-            onClick={() =>
-              toggleGroup(group.id)
-            }
           >
-            {openGroups[group.id]
-              ? "▼"
-              : "▶"}
+            <h2
+              style={{
+                cursor: "pointer",
+              }}
+              onClick={() =>
+                toggleGroup(group.id)
+              }
+            >
+              {openGroups[group.id]
+                ? "▼ "
+                : "▶ "}
+              {group.name}
+            </h2>
 
-            {group.name}
-          </h2>
+            {openGroups[group.id] && (
+              <>
+                <div
+                  style={{
+                    marginBottom: "10px",
+                  }}
+                >
+                  {!editingGroups[
+                    group.id
+                  ] ? (
+                    <button
+                      onClick={() =>
+                        startRecording(
+                          group.id
+                        )
+                      }
+                    >
+                      Record
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        stopRecording(
+                          group.id
+                        )
+                      }
+                    >
+                      Save
+                    </button>
+                  )}
+                </div>
 
-          {openGroups[group.id] && (
-            <>
-              <div
-                style={{
-                  marginBottom: "10px",
-                }}
-              >
-                {!editingGroups[group.id] ? (
-                  <button
-                    onClick={() =>
-                      startRecording(group.id)
-                    }
-                  >
-                    Record
-                  </button>
-                ) : (
-                  <button
-                    onClick={() =>
-                      stopRecording(group.id)
-                    }
-                  >
-                    Save
-                  </button>
-                )}
-              </div>
+                <table
+                  border="1"
+                  cellPadding="10"
+                  style={{
+                    width: "100%",
+                    borderCollapse:
+                      "collapse",
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Unit</th>
+                      <th>Reorder</th>
 
-              <div
-                style={{
-                  marginBottom: "10px",
-                  color: "gray",
-                }}
-              >
-                Date:{" "}
-                {group.recordDate ||
-                  "Not Recorded"}
-              </div>
-
-              <table
-                border="1"
-                cellPadding="10"
-                style={{
-                  width: "100%",
-                  borderCollapse:
-                    "collapse",
-                }}
-              >
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Unit</th>
-                    <th>Reorder</th>
-                    <th>
-                      {group.recordDate ||
-                        "Current Stock"}
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {group.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.name}</td>
-
-                      <td>{item.unit}</td>
-
-                      <td>{item.reorder}</td>
-
-                      <td>
-                        <input
-                          type="number"
-                          value={
-                            item.quantity
-                          }
-                          disabled={
-                            !editingGroups[
-                              group.id
-                            ]
-                          }
-                          onChange={(e) =>
-                            updateQuantity(
-                              group.id,
-                              item.id,
-                              Number(
-                                e.target
-                                  .value
-                              )
-                            )
-                          }
-                          style={{
-                            width:
-                              "100px",
-                            backgroundColor:
-                              editingGroups[
-                                group.id
-                              ]
-                                ? "white"
-                                : "#f0f0f0",
-                          }}
-                        />
-                      </td>
+                      {dates.map(
+                        (date) => (
+                          <th
+                            key={date}
+                          >
+                            {date}
+                          </th>
+                        )
+                      )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
-      ))}
+                  </thead>
+
+                  <tbody>
+                    {group.items.map(
+                      (item) => (
+                        <tr
+                          key={item.id}
+                        >
+                          <td>
+                            {item.name}
+                          </td>
+
+                          <td>
+                            {item.unit}
+                          </td>
+
+                          <td>
+                            {
+                              item.reorder
+                            }
+                          </td>
+
+                          {dates.map(
+                            (date) => {
+                              const record =
+                                item.records?.find(
+                                  (
+                                    r
+                                  ) =>
+                                    r.date ===
+                                    date
+                                );
+
+                              const isLatest =
+                                date ===
+                                latestDate;
+
+                              return (
+                                <td
+                                  key={
+                                    date
+                                  }
+                                >
+                                  <input
+                                    type="number"
+                                    value={
+                                      record?.qty ??
+                                      ""
+                                    }
+                                    disabled={
+                                      !(
+                                        isLatest &&
+                                        editingGroups[
+                                          group
+                                            .id
+                                        ]
+                                      )
+                                    }
+                                    onChange={(
+                                      e
+                                    ) =>
+                                      updateRecord(
+                                        group.id,
+                                        item.id,
+                                        date,
+                                        Number(
+                                          e
+                                            .target
+                                            .value
+                                        )
+                                      )
+                                    }
+                                    style={{
+                                      width:
+                                        "90px",
+                                      backgroundColor:
+                                        isLatest &&
+                                        editingGroups[
+                                          group
+                                            .id
+                                        ]
+                                          ? "white"
+                                          : "#f0f0f0",
+                                    }}
+                                  />
+                                </td>
+                              );
+                            }
+                          )}
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        );
+      })}
     </>
   );
 }

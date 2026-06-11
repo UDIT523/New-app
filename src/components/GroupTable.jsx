@@ -140,9 +140,7 @@ export default function GroupTable({
                           </td>
 
                           <td>
-                            {
-                              item.reorder
-                            }
+                            {item.reorder}
                           </td>
 
                           {dates.map(
@@ -160,54 +158,67 @@ export default function GroupTable({
                                 date ===
                                 latestDate;
 
+                              const canEdit =
+                                isLatest &&
+                                editingGroups[
+                                  group.id
+                                ];
+
+                              const isLowStock =
+                                record &&
+                                record.qty <
+                                  item.reorder;
+
                               return (
                                 <td
-                                  key={
-                                    date
-                                  }
+                                  key={date}
                                 >
-                                  <input
-                                    type="number"
-                                    value={
-                                      record?.qty ??
-                                      ""
-                                    }
-                                    disabled={
-                                      !(
-                                        isLatest &&
-                                        editingGroups[
-                                          group
-                                            .id
-                                        ]
-                                      )
-                                    }
-                                    onChange={(
-                                      e
-                                    ) =>
-                                      updateRecord(
-                                        group.id,
-                                        item.id,
-                                        date,
-                                        Number(
-                                          e
-                                            .target
-                                            .value
+                                  {canEdit ? (
+                                    <input
+                                      type="number"
+                                      value={
+                                        record?.qty ??
+                                        ""
+                                      }
+                                      onChange={(
+                                        e
+                                      ) =>
+                                        updateRecord(
+                                          group.id,
+                                          item.id,
+                                          date,
+                                          Number(
+                                            e
+                                              .target
+                                              .value
+                                          )
                                         )
-                                      )
-                                    }
-                                    style={{
-                                      width:
-                                        "90px",
-                                      backgroundColor:
-                                        isLatest &&
-                                        editingGroups[
-                                          group
-                                            .id
-                                        ]
-                                          ? "white"
-                                          : "#f0f0f0",
-                                    }}
-                                  />
+                                      }
+                                      style={{
+                                        width:
+                                          "90px",
+                                      }}
+                                    />
+                                  ) : (
+                                    <span
+                                      style={{
+                                        color:
+                                          isLowStock
+                                            ? "red"
+                                            : "black",
+                                        fontWeight:
+                                          isLowStock
+                                            ? "bold"
+                                            : "normal",
+                                      }}
+                                    >
+                                      {record?.qty ??
+                                        "-"}
+
+                                      {isLowStock &&
+                                        " ⚠"}
+                                    </span>
+                                  )}
                                 </td>
                               );
                             }

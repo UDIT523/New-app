@@ -205,20 +205,35 @@ const addDateColumn = (groupId) => {
   groups.forEach((group) => {
     rows.push([group.name]);
 
+    const dates =
+      group.recordDates || [];
+
     rows.push([
-      "S.No",
       "Item",
       "Unit",
-      group.recordDate || "Current Stock",
+      "Reorder",
+      ...dates,
     ]);
 
-    group.items.forEach((item, index) => {
-      rows.push([
-        index + 1,
+    group.items.forEach((item) => {
+      const row = [
         item.name,
         item.unit,
-        item.quantity,
-      ]);
+        item.reorder,
+      ];
+
+      dates.forEach((date) => {
+        const record =
+          item.records?.find(
+            (r) => r.date === date
+          );
+
+        row.push(
+          record?.qty ?? "-"
+        );
+      });
+
+      rows.push(row);
     });
 
     rows.push([]);
@@ -228,25 +243,18 @@ const addDateColumn = (groupId) => {
   const worksheet =
     XLSX.utils.aoa_to_sheet(rows);
 
-  worksheet["!cols"] = [
-    { wch: 8 },
-    { wch: 40 },
-    { wch: 10 },
-    { wch: 15 },
-  ];
-
   const workbook =
     XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(
     workbook,
     worksheet,
-    "Raw Material Stock"
+    "Raw Materials"
   );
 
   XLSX.writeFile(
     workbook,
-    "Raw_Material_Stock.xlsx"
+    "Raw_Materials.xlsx"
   );
 };
 
@@ -258,7 +266,9 @@ const importFromExcel = (event) => {
   const reader = new FileReader();
 
   reader.onload = (e) => {
-    const data = new Uint8Array(e.target.result);
+    const data = new Uint8Array(
+      e.target.result
+    );
 
     const workbook = XLSX.read(data, {
       type: "array",
@@ -277,59 +287,122 @@ const importFromExcel = (event) => {
     const importedGroups = [];
 
     let currentGroup = null;
+    let currentDates = [];
 
     rows.forEach((row) => {
-      if (!row || row.length === 0) return;
+      if (
+        !row ||
+        row.length === 0 ||
+        row.every(
+          (cell) =>
+            cell === undefined ||
+            cell === ""
+        )
+      ) {
+        return;
+      }
 
       const firstCell = String(
         row[0] || ""
       ).trim();
 
+      // Group Name Row
       if (
-        firstCell &&
-        firstCell !== "S.No" &&
-        !Number(firstCell)
+        row.length === 1 &&
+        firstCell
       ) {
         currentGroup = {
-          id: Date.now() + Math.random(),
+          id:
+            Date.now() +
+            Math.random(),
           name: firstCell,
           items: [],
-          recordDate:
-            row[3] || "Current Stock",
+          recordDates: [],
         };
 
-        importedGroups.push(currentGroup);
+        importedGroups.push(
+          currentGroup
+        );
+
         return;
       }
 
+      // Header Row
       if (
-        firstCell === "S.No" ||
-        !currentGroup
+        firstCell === "Item"
       ) {
+        currentDates =
+          row.slice(3);
+
+        if (currentGroup) {
+          currentGroup.recordDates =
+            currentDates;
+        }
+
         return;
       }
 
-      currentGroup.items.push({
-  id: Date.now() + Math.random(),
-  name: row[1] || "",
-  unit: row[2] || "",
-  reorder: 0,
-  records: [],
-});
+      // Item Row
+      if (
+        currentGroup &&
+        firstCell !== "Item"
+      ) {
+        const item = {
+          id:
+            Date.now() +
+            Math.random(),
+
+          name:
+            row[0] || "",
+
+          unit:
+            row[1] || "",
+
+          reorder:
+            Number(row[2]) || 0,
+
+          records: [],
+        };
+
+        currentDates.forEach(
+          (date, index) => {
+            const value =
+              row[index + 3];
+
+            if (
+              value !== undefined &&
+              value !== "-" &&
+              value !== ""
+            ) {
+              item.records.push({
+                date,
+                qty:
+                  Number(
+                    value
+                  ),
+              });
+            }
+          }
+        );
+
+        currentGroup.items.push(
+          item
+        );
+      }
     });
 
-    if (importedGroups.length > 0) {
-      setGroups(importedGroups);
+    setGroups(importedGroups);
 
-      localStorage.setItem(
-        "raw-material-groups",
-        JSON.stringify(importedGroups)
-      );
+    localStorage.setItem(
+      "raw-material-groups",
+      JSON.stringify(
+        importedGroups
+      )
+    );
 
-      alert(
-        `${importedGroups.length} groups imported successfully`
-      );
-    }
+    alert(
+      `Imported ${importedGroups.length} groups successfully`
+    );
   };
 
   reader.readAsArrayBuffer(file);

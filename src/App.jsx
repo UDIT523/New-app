@@ -50,15 +50,18 @@ const updateRecord = (
           if (item.id !== itemId)
             return item;
 
+          const records =
+            item.records || [];
+
           const existing =
-            item.records.findIndex(
+            records.findIndex(
               (r) => r.date === date
             );
 
           if (existing >= 0) {
             return {
               ...item,
-              records: item.records.map(
+              records: records.map(
                 (r, index) =>
                   index === existing
                     ? {
@@ -73,7 +76,7 @@ const updateRecord = (
           return {
             ...item,
             records: [
-              ...item.records,
+              ...records,
               {
                 date,
                 qty,
@@ -307,12 +310,12 @@ const importFromExcel = (event) => {
       }
 
       currentGroup.items.push({
-        id: Date.now() + Math.random(),
-        name: row[1] || "",
-        unit: row[2] || "",
-        quantity: Number(row[3]) || 0,
-        reorder: 0,
-      });
+  id: Date.now() + Math.random(),
+  name: row[1] || "",
+  unit: row[2] || "",
+  reorder: 0,
+  records: [],
+});
     });
 
     if (importedGroups.length > 0) {

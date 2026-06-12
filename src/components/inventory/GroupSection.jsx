@@ -18,7 +18,8 @@ const DATE_WINDOW = 8;
 export default function GroupSection({ group, forceExpand, onEditItem }) {
   const toast = useToast();
   const confirm = useConfirm();
-  const { user } = useAuth();
+  const { user, can } = useAuth();
+  
   const { removeGroup, removeItem, addDate, save } = useInventoryMutations();
 
   const [expanded, setExpanded] = useState(true);
@@ -147,34 +148,48 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
 
         <div className="flex items-center gap-2">
           {recording ? (
-            <>
-              <Button size="sm" variant="ghost" onClick={cancelRecording}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={saveRecording} loading={save.isPending}>
-                Save
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={startRecording}
-                disabled={!group.items.length}
-              >
-                <ClipboardEdit className="h-4 w-4" />
-                Record
-              </Button>
-              <button
-                onClick={deleteGroup}
-                className="rounded-xl p-2 text-ink-400 transition-colors hover:bg-danger-soft hover:text-danger"
-                aria-label={`Delete ${group.name}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </>
-          )}
+  <>
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={cancelRecording}
+    >
+      Cancel
+    </Button>
+
+    <Button
+      size="sm"
+      onClick={saveRecording}
+      loading={save.isPending}
+    >
+      Save
+    </Button>
+  </>
+) : (
+  <>
+    {can("inventory:record") && (
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={startRecording}
+        disabled={!group.items.length}
+      >
+        <ClipboardEdit className="h-4 w-4" />
+        Record
+      </Button>
+    )}
+
+    {can("inventory:manage") && (
+      <button
+        onClick={deleteGroup}
+        className="rounded-xl p-2 text-ink-400 transition-colors hover:bg-danger-soft hover:text-danger"
+        aria-label={`Delete ${group.name}`}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    )}
+  </>
+)}
         </div>
       </div>
 

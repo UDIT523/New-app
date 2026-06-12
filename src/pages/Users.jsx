@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { Users as UsersIcon } from "lucide-react";
 import { formatDate, initialsOf, roleLabel } from "../utils/format";
 
-const ROLES = ["admin", "manager", "technician"];
+const ROLES = ["admin", "employee"];
 
 export default function Users() {
   const { data: users = [], isLoading } = useUsers();

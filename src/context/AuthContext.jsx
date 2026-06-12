@@ -13,7 +13,9 @@ const STORAGE_KEY = "rawstock.currentUser";
 
 // DEV-ONLY bypass: skip login and act as a fake admin for UI work.
 const DEV_BYPASS =
-  import.meta.env.DEV && import.meta.env.VITE_DEV_BYPASS_AUTH === "true";
+  import.meta.env.DEV &&
+  import.meta.env.VITE_DEV_BYPASS_AUTH === "true";
+
 const DEV_USER = {
   id: "dev",
   username: "dev",
@@ -24,6 +26,7 @@ const DEV_USER = {
 
 function readStoredUser() {
   if (DEV_BYPASS) return DEV_USER;
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
 
@@ -42,18 +45,17 @@ function readStoredUser() {
   }
 }
 
-/**
- * Session without authentication: the "current user" is a row from the
- * public.users table, persisted in localStorage. Roles gate the UI only —
- * admins manage users; technicians get everything except user management.
- */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser);
 
   const persist = useCallback((u) => {
     setUser(u);
+
     if (u?.status === "approved") {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(u)
+      );
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -61,27 +63,46 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (username, password) => {
-      const u = await loginUser(username, password);
+      const u = await loginUser(
+        username,
+        password
+      );
+
       persist(u);
+
       return u;
     },
     [persist]
   );
 
-  const register = useCallback(async (values) => {
-    return await registerUser(values);
-  }, []);
+  const register = useCallback(
+    async (values) => {
+      return await registerUser(values);
+    },
+    []
+  );
 
-  const logout = useCallback(() => persist(null), [persist]);
+  const logout = useCallback(
+    () => persist(null),
+    [persist]
+  );
 
   const can = useCallback(
     (perm) => {
       if (!user) return false;
 
-      if (user.role === "admin") return true;
+      // Admin can do everything
+      if (user.role === "admin") {
+        return true;
+      }
 
-      if (user.role === "technician") {
-        return perm !== "users:manage";
+      // Employee permissions
+      if (user.role === "employee") {
+        return [
+          "inventory:view",
+          "inventory:record",
+          "inventory:export",
+        ].includes(perm);
       }
 
       return false;
@@ -102,14 +123,30 @@ export function AuthProvider({ children }) {
       register,
       logout,
     }),
-    [user, can, login, register, logout]
+    [
+      user,
+      can,
+      login,
+      register,
+      logout,
+    ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+
+  if (!ctx) {
+    throw new Error(
+      "useAuth must be used within AuthProvider"
+    );
+  }
+
   return ctx;
 }

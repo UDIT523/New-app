@@ -14,7 +14,7 @@ export async function registerUser({ username, password, fullName }) {
       username: uname,
       password,
       full_name: fullName?.trim() || uname,
-      role: "technician",
+      role: "employee",
       status: "pending",
     })
     .select("id, username, full_name, role, status, created_at")

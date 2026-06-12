@@ -7,38 +7,86 @@ import EmptyState from "../components/ui/EmptyState";
 import Skeleton from "../components/ui/Skeleton";
 import { cn } from "../utils/cn";
 import { useInventory } from "../hooks/useInventory";
+import { useAuth } from "../context/AuthContext";
 import GroupSection from "../components/inventory/GroupSection";
 import GroupFormModal from "../components/inventory/GroupFormModal";
 import ItemFormModal from "../components/inventory/ItemFormModal";
 import ImportExportButtons from "../components/inventory/ImportExportButtons";
 
 export default function Inventory() {
-  const { data: groups = [], isLoading } = useInventory();
+  const { data: groups = [], isLoading } =
+    useInventory();
 
-  const [search, setSearch] = useState("");
-  const [lowOnly, setLowOnly] = useState(false);
-  const [showAddGroup, setShowAddGroup] = useState(false);
-  const [itemModal, setItemModal] = useState(null); // { editItem?, defaultGroupId? }
+  const { can } = useAuth();
+
+  const [search, setSearch] =
+    useState("");
+
+  const [lowOnly, setLowOnly] =
+    useState(false);
+
+  const [showAddGroup, setShowAddGroup] =
+    useState(false);
+
+  const [itemModal, setItemModal] =
+    useState(null);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q =
+      search.trim().toLowerCase();
+
     return groups
       .map((g) => {
         let items = g.items;
-        if (lowOnly) items = items.filter((i) => i.isLow);
-        if (q && !g.name.toLowerCase().includes(q)) {
-          items = items.filter((i) => i.name.toLowerCase().includes(q));
+
+        if (lowOnly) {
+          items = items.filter(
+            (i) => i.isLow
+          );
         }
-        return { ...g, items };
+
+        if (
+          q &&
+          !g.name
+            .toLowerCase()
+            .includes(q)
+        ) {
+          items = items.filter(
+            (i) =>
+              i.name
+                .toLowerCase()
+                .includes(q)
+          );
+        }
+
+        return {
+          ...g,
+          items,
+        };
       })
       .filter((g) => {
-        if (!q && !lowOnly) return true;
-        if (q && g.name.toLowerCase().includes(q) && !lowOnly) return true;
-        return g.items.length > 0;
+        if (!q && !lowOnly)
+          return true;
+
+        if (
+          q &&
+          g.name
+            .toLowerCase()
+            .includes(q) &&
+          !lowOnly
+        ) {
+          return true;
+        }
+
+        return (
+          g.items.length > 0
+        );
       });
   }, [groups, search, lowOnly]);
 
-  const filtering = Boolean(search.trim()) || lowOnly;
+  const filtering =
+    Boolean(search.trim()) ||
+    lowOnly;
 
   return (
     <div>
@@ -47,19 +95,39 @@ export default function Inventory() {
         description="Daily stock recording by material group."
         actions={
           <>
-            <ImportExportButtons groups={groups} />
-            <Button
-              variant="secondary"
-              onClick={() => setItemModal({})}
-              disabled={!groups.length}
-            >
-              <Plus className="h-4 w-4" />
-              Add Item
-            </Button>
-            <Button onClick={() => setShowAddGroup(true)}>
-              <Plus className="h-4 w-4" />
-              Add Group
-            </Button>
+            <ImportExportButtons
+              groups={groups}
+            />
+
+            {can(
+              "inventory:manage"
+            ) && (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    setItemModal({})
+                  }
+                  disabled={
+                    !groups.length
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Item
+                </Button>
+
+                <Button
+                  onClick={() =>
+                    setShowAddGroup(
+                      true
+                    )
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Group
+                </Button>
+              </>
+            )}
           </>
         }
       />
@@ -70,11 +138,20 @@ export default function Inventory() {
             icon={Search}
             placeholder="Search items or groups…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              setSearch(
+                e.target.value
+              )
+            }
           />
         </div>
+
         <button
-          onClick={() => setLowOnly((v) => !v)}
+          onClick={() =>
+            setLowOnly(
+              (v) => !v
+            )
+          }
           className={cn(
             "inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-all duration-150",
             lowOnly
@@ -97,10 +174,20 @@ export default function Inventory() {
           title="No material groups yet"
           description="Create your first group, add items, then record daily stock — or import an existing Excel sheet."
           action={
-            <Button onClick={() => setShowAddGroup(true)}>
-              <Plus className="h-4 w-4" />
-              Add Group
-            </Button>
+            can(
+              "inventory:manage"
+            ) ? (
+              <Button
+                onClick={() =>
+                  setShowAddGroup(
+                    true
+                  )
+                }
+              >
+                <Plus className="h-4 w-4" />
+                Add Group
+              </Button>
+            ) : null
           }
         />
       ) : !filtered.length ? (
@@ -115,22 +202,48 @@ export default function Inventory() {
             <GroupSection
               key={g.id}
               group={g}
-              forceExpand={filtering}
-              onEditItem={(item, groupId) =>
-                setItemModal({ editItem: { ...item, groupId } })
+              forceExpand={
+                filtering
+              }
+              onEditItem={(
+                item,
+                groupId
+              ) =>
+                setItemModal({
+                  editItem: {
+                    ...item,
+                    groupId,
+                  },
+                })
               }
             />
           ))}
         </div>
       )}
 
-      <GroupFormModal open={showAddGroup} onClose={() => setShowAddGroup(false)} />
+      <GroupFormModal
+        open={showAddGroup}
+        onClose={() =>
+          setShowAddGroup(
+            false
+          )
+        }
+      />
+
       <ItemFormModal
-        open={Boolean(itemModal)}
-        onClose={() => setItemModal(null)}
+        open={Boolean(
+          itemModal
+        )}
+        onClose={() =>
+          setItemModal(null)
+        }
         groups={groups}
-        defaultGroupId={itemModal?.defaultGroupId}
-        editItem={itemModal?.editItem}
+        defaultGroupId={
+          itemModal?.defaultGroupId
+        }
+        editItem={
+          itemModal?.editItem
+        }
       />
     </div>
   );

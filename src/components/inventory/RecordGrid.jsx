@@ -3,6 +3,7 @@ import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { Table, THead, TH, TBody, TR, TD } from "../ui/Table";
 import Badge from "../ui/Badge";
 import { cn } from "../../utils/cn";
+import { useAuth } from "../../context/AuthContext";
 import { formatDisplayDate, formatNumber, isLowStock } from "../../utils/format";
 
 /**
@@ -22,7 +23,7 @@ export default function RecordGrid({
   onDeleteItem,
 }) {
   const inputRefs = useRef([]);
-
+  const { can } = useAuth();
   const focusRow = (index) => {
     const el = inputRefs.current[index];
     if (el) {
@@ -67,22 +68,25 @@ export default function RecordGrid({
             <TD className={cn(stickyCell, "bg-white font-medium text-ink-900")}>
               <span className="inline-flex items-center gap-2">
                 {item.name}
-                <span className="inline-flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100">
-                  <button
-                    onClick={() => onEditItem(item)}
-                    className="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-900"
-                    aria-label={`Edit ${item.name}`}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => onDeleteItem(item)}
-                    className="rounded-lg p-1 text-ink-400 hover:bg-danger-soft hover:text-danger"
-                    aria-label={`Delete ${item.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </span>
+                {can("inventory:manage") && (
+  <span className="inline-flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100">
+    <button
+      onClick={() => onEditItem(item)}
+      className="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-900"
+      aria-label={`Edit ${item.name}`}
+    >
+      <Pencil className="h-3.5 w-3.5" />
+    </button>
+
+    <button
+      onClick={() => onDeleteItem(item)}
+      className="rounded-lg p-1 text-ink-400 hover:bg-danger-soft hover:text-danger"
+      aria-label={`Delete ${item.name}`}
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+    </button>
+  </span>
+)}
               </span>
             </TD>
             <TD className="text-ink-500">{item.unit}</TD>

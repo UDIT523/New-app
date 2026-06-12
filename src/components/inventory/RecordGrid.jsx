@@ -4,13 +4,12 @@ import { Table, THead, TH, TBody, TR, TD } from "../ui/Table";
 import Badge from "../ui/Badge";
 import { cn } from "../../utils/cn";
 import { useAuth } from "../../context/AuthContext";
-import { formatDisplayDate, formatNumber, isLowStock } from "../../utils/format";
+import {
+  formatDisplayDate,
+  formatNumber,
+  isLowStock,
+} from "../../utils/format";
 
-/**
- * The date-columns grid for one group. The item column stays pinned while the
- * date columns scroll horizontally. In record mode the last (today) column
- * turns into quantity inputs with Enter/arrow-key navigation between rows.
- */
 export default function RecordGrid({
   group,
   dates,
@@ -24,8 +23,10 @@ export default function RecordGrid({
 }) {
   const inputRefs = useRef([]);
   const { can } = useAuth();
+
   const focusRow = (index) => {
     const el = inputRefs.current[index];
+
     if (el) {
       el.focus();
       el.select();
@@ -33,114 +34,226 @@ export default function RecordGrid({
   };
 
   const onKeyDown = (e, index) => {
-    if (e.key === "Enter" || e.key === "ArrowDown") {
+    if (
+      e.key === "Enter" ||
+      e.key === "ArrowDown"
+    ) {
       e.preventDefault();
       focusRow(index + 1);
-    } else if (e.key === "ArrowUp") {
+    } else if (
+      e.key === "ArrowUp"
+    ) {
       e.preventDefault();
       focusRow(index - 1);
-    } else if (e.key === "Escape") {
+    } else if (
+      e.key === "Escape"
+    ) {
       onCancel();
     }
   };
 
-  const lastDate = dates[dates.length - 1];
-  const stickyCell = "sticky left-0 z-10 border-r border-ink-100";
+  const lastDate =
+    dates[dates.length - 1];
+
+  const stickyCell =
+    "sticky left-0 z-10 border-r border-ink-100";
 
   return (
-    <Table minWidth={460 + dates.length * 110}>
+    <Table
+      minWidth={
+        400 + dates.length * 110
+      }
+    >
       <THead>
-        <TH className={cn(stickyCell, "bg-ink-25")}>Item</TH>
+        <TH
+          className={cn(
+            stickyCell,
+            "bg-ink-25"
+          )}
+        >
+          Item
+        </TH>
+
         <TH>Unit</TH>
-        <TH>Reorder</TH>
+
         {dates.map((d) => (
-          <TH key={d} className="text-right">
+          <TH
+            key={d}
+            className="text-right"
+          >
             <span className="inline-flex items-center gap-1.5">
               {formatDisplayDate(d)}
-              {d === lastDate && <Badge variant="neutral">Latest</Badge>}
+
+              {d === lastDate && (
+                <Badge variant="neutral">
+                  Latest
+                </Badge>
+              )}
             </span>
           </TH>
         ))}
       </THead>
-      <TBody>
-        {group.items.map((item, rowIndex) => (
-          <TR key={item.id} className="group/row">
-            <TD className={cn(stickyCell, "bg-white font-medium text-ink-900")}>
-              <span className="inline-flex items-center gap-2">
-                {item.name}
-                {can("inventory:manage") && (
-  <span className="inline-flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100">
-    <button
-      onClick={() => onEditItem(item)}
-      className="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-900"
-      aria-label={`Edit ${item.name}`}
-    >
-      <Pencil className="h-3.5 w-3.5" />
-    </button>
 
-    <button
-      onClick={() => onDeleteItem(item)}
-      className="rounded-lg p-1 text-ink-400 hover:bg-danger-soft hover:text-danger"
-      aria-label={`Delete ${item.name}`}
-    >
-      <Trash2 className="h-3.5 w-3.5" />
-    </button>
-  </span>
-)}
-              </span>
-            </TD>
-            <TD className="text-ink-500">{item.unit}</TD>
-            <TD className="text-ink-500">{formatNumber(item.reorder)}</TD>
-            {dates.map((d) => {
-              const editable = recording && d === today;
-              if (editable) {
+      <TBody>
+        {group.items.map(
+          (item, rowIndex) => (
+            <TR
+              key={item.id}
+              className="group/row"
+            >
+              <TD
+                className={cn(
+                  stickyCell,
+                  "bg-white font-medium text-ink-900"
+                )}
+              >
+                <span className="inline-flex items-center gap-2">
+                  {item.name} (
+                  {item.reorder})
+
+                  {can(
+                    "inventory:manage"
+                  ) && (
+                    <span className="inline-flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100">
+                      <button
+                        onClick={() =>
+                          onEditItem(
+                            item
+                          )
+                        }
+                        className="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-900"
+                        aria-label={`Edit ${item.name}`}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          onDeleteItem(
+                            item
+                          )
+                        }
+                        className="rounded-lg p-1 text-ink-400 hover:bg-danger-soft hover:text-danger"
+                        aria-label={`Delete ${item.name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  )}
+                </span>
+              </TD>
+
+              <TD className="text-ink-500">
+                {item.unit}
+              </TD>
+
+              {dates.map((d) => {
+                const editable =
+                  recording &&
+                  d === today;
+
+                if (editable) {
+                  return (
+                    <TD
+                      key={d}
+                      className="text-right"
+                    >
+                      <input
+                        ref={(el) =>
+                          (inputRefs.current[
+                            rowIndex
+                          ] = el)
+                        }
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        value={
+                          drafts[
+                            item.id
+                          ] ?? ""
+                        }
+                        onChange={(
+                          e
+                        ) =>
+                          onDraft(
+                            item.id,
+                            e.target
+                              .value
+                          )
+                        }
+                        onKeyDown={(
+                          e
+                        ) =>
+                          onKeyDown(
+                            e,
+                            rowIndex
+                          )
+                        }
+                        placeholder={
+                          d in
+                          item.records
+                            ? String(
+                                item
+                                  .records[
+                                  d
+                                ]
+                              )
+                            : "0"
+                        }
+                        className={cn(
+                          "h-9 w-24 rounded-xl border border-ink-200 bg-white px-2.5 text-right text-sm text-ink-900",
+                          "transition-all duration-150 ease-[var(--ease-out-soft)]",
+                          "focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/10"
+                        )}
+                      />
+                    </TD>
+                  );
+                }
+
+                const has =
+                  d in
+                  item.records;
+
+                const qty =
+                  item.records[d];
+
+                const low =
+                  has &&
+                  isLowStock(
+                    qty,
+                    item.reorder
+                  );
+
                 return (
-                  <TD key={d} className="text-right">
-                    <input
-                      ref={(el) => (inputRefs.current[rowIndex] = el)}
-                      type="number"
-                      inputMode="decimal"
-                      min="0"
-                      value={drafts[item.id] ?? ""}
-                      onChange={(e) => onDraft(item.id, e.target.value)}
-                      onKeyDown={(e) => onKeyDown(e, rowIndex)}
-                      placeholder={
-                        d in item.records ? String(item.records[d]) : "0"
-                      }
-                      className={cn(
-                        "h-9 w-24 rounded-xl border border-ink-200 bg-white px-2.5 text-right text-sm text-ink-900",
-                        "transition-all duration-150 ease-[var(--ease-out-soft)]",
-                        "focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/10"
-                      )}
-                    />
+                  <TD
+                    key={d}
+                    className={cn(
+                      "text-right tabular-nums",
+                      low &&
+                        "bg-danger-soft/50 font-semibold text-danger"
+                    )}
+                  >
+                    {has ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        {low && (
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                        )}
+
+                        {formatNumber(
+                          qty
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-ink-300">
+                        —
+                      </span>
+                    )}
                   </TD>
                 );
-              }
-
-              const has = d in item.records;
-              const qty = item.records[d];
-              const low = has && isLowStock(qty, item.reorder);
-              return (
-                <TD
-                  key={d}
-                  className={cn(
-                    "text-right tabular-nums",
-                    low && "bg-danger-soft/50 font-semibold text-danger"
-                  )}
-                >
-                  {has ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      {low && <AlertTriangle className="h-3.5 w-3.5" />}
-                      {formatNumber(qty)}
-                    </span>
-                  ) : (
-                    <span className="text-ink-300">—</span>
-                  )}
-                </TD>
-              );
-            })}
-          </TR>
-        ))}
+              })}
+            </TR>
+          )
+        )}
       </TBody>
     </Table>
   );

@@ -12,6 +12,7 @@ import GroupSection from "../components/inventory/GroupSection";
 import GroupFormModal from "../components/inventory/GroupFormModal";
 import ItemFormModal from "../components/inventory/ItemFormModal";
 import ImportExportButtons from "../components/inventory/ImportExportButtons";
+import StockOverview from "../components/inventory/StockOverview";
 
 export default function Inventory() {
   const { data: groups = [], isLoading } =
@@ -131,6 +132,10 @@ export default function Inventory() {
           </>
         }
       />
+
+      {!isLoading && groups.length > 0 && (
+        <StockOverview groups={groups} />
+      )}
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <div className="w-full sm:max-w-xs">

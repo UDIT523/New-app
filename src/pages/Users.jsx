@@ -1,6 +1,7 @@
 import PageHeader from "../components/layout/PageHeader";
 import Badge from "../components/ui/Badge";
-import Select from "../components/ui/Select";
+import Button from "../components/ui/Button";
+import SelectMenu from "../components/ui/SelectMenu";
 import EmptyState from "../components/ui/EmptyState";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { Table, THead, TH, TBody, TR, TD } from "../components/ui/Table";
@@ -67,42 +68,52 @@ export default function Users() {
       />
 
       {pendingUsers.length > 0 && (
-        <div className="mb-8 rounded-xl border bg-white p-5">
-          <h3 className="mb-4 text-lg font-semibold">
-            Pending Account Requests
-          </h3>
+        <div className="mb-8 rounded-2xl border border-ink-100 bg-white p-5 shadow-[var(--shadow-soft)]">
+          <div className="mb-4 flex items-center gap-2.5">
+            <h3 className="text-lg font-semibold tracking-tight text-ink-900">
+              Pending Account Requests
+            </h3>
+            <Badge variant="outline">{pendingUsers.length}</Badge>
+          </div>
 
           <div className="space-y-3">
             {pendingUsers.map((u) => (
               <div
                 key={u.id}
-                className="flex items-center justify-between rounded-lg border p-4"
+                className="flex items-center justify-between gap-4 rounded-xl border border-ink-100 bg-ink-25 p-4"
               >
-                <div>
-                  <div className="font-semibold">
-                    {u.full_name}
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    @{u.username}
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink-900 text-xs font-semibold text-white">
+                    {initialsOf(u.full_name) || "U"}
+                  </span>
+                  <div className="leading-tight">
+                    <div className="font-semibold text-ink-900">
+                      {u.full_name || "Unnamed"}
+                    </div>
+                    <div className="text-xs text-ink-400">
+                      @{u.username}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-  <button
-    onClick={() => handleApprove(u.id)}
-    className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
-  >
-    Approve
-  </button>
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleApprove(u.id)}
+                    loading={approve.isPending}
+                  >
+                    Approve
+                  </Button>
 
-  <button
-    onClick={() => handleReject(u.id)}
-    className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100"
-  >
-    Remove
-  </button>
-</div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleReject(u.id)}
+                    loading={reject.isPending}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -176,28 +187,20 @@ export default function Users() {
                   </TD>
 
                   <TD>
-                    <Select
+                    <SelectMenu
                       value={u.role}
                       disabled={
                         isSelf ||
                         setRole.isPending
                       }
-                      onChange={(e) =>
-                        changeRole(
-                          u.id,
-                          e.target.value
-                        )
+                      onChange={(role) =>
+                        changeRole(u.id, role)
                       }
-                    >
-                      {ROLES.map((r) => (
-                        <option
-                          key={r}
-                          value={r}
-                        >
-                          {roleLabel(r)}
-                        </option>
-                      ))}
-                    </Select>
+                      options={ROLES.map((r) => ({
+                        value: r,
+                        label: roleLabel(r),
+                      }))}
+                    />
                   </TD>
                 </TR>
               );

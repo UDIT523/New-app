@@ -54,10 +54,8 @@ export function roleLabel(role) {
   switch (role) {
     case "admin":
       return "Administrator";
-    case "manager":
-      return "Manager";
-    case "technician":
-      return "Technician";
+    case "employee":
+      return "Employee";
     default:
       return role || "—";
   }

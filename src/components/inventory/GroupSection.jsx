@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import HistoryModal from "./HistoryModal";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, ClipboardEdit, Trash2 } from "lucide-react";
 import Card from "../ui/Card";
@@ -26,7 +27,7 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
   const [recording, setRecording] = useState(false);
   const [drafts, setDrafts] = useState({});
   const [showAllDates, setShowAllDates] = useState(false);
-
+  const [showHistory, setShowHistory] = useState(false);
   const today = todayISO();
   const isOpen = forceExpand || expanded;
   const lowCount = group.items.filter((i) => i.isLow).length;
@@ -127,7 +128,7 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
 
   return (
     <Card>
-      <div className="flex flex-wrap items-center gap-3 px-5 py-4">
+      <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
         <button
           onClick={() => setExpanded((v) => !v)}
           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
@@ -146,26 +147,38 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
           {lowCount > 0 && <Badge variant="danger">{lowCount} low</Badge>}
         </button>
 
-        <div className="flex items-center gap-2">
-          {recording ? (
-  <>
-    <Button
-      size="sm"
-      variant="ghost"
-      onClick={cancelRecording}
-    >
-      Cancel
-    </Button>
+        <div className="flex flex-wrap items-center gap-2">
 
+  {!recording && (
     <Button
-      size="sm"
-      onClick={saveRecording}
-      loading={save.isPending}
-    >
-      Save
-    </Button>
-  </>
-) : (
+  size="sm"
+  variant="secondary"
+  className="md:hidden"
+  onClick={() => setShowHistory(true)}
+>
+  History
+</Button>
+  )}
+
+  {recording ? (
+    <>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={cancelRecording}
+      >
+        Cancel
+      </Button>
+
+      <Button
+        size="sm"
+        onClick={saveRecording}
+        loading={save.isPending}
+      >
+        Save
+      </Button>
+    </>
+  ) : (
   <>
     {can("inventory:record") && (
       <Button
@@ -235,6 +248,11 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
           </motion.div>
         )}
       </AnimatePresence>
+      <HistoryModal
+  open={showHistory}
+  onClose={() => setShowHistory(false)}
+  group={group}
+/>
     </Card>
   );
 }

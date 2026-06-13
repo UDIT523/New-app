@@ -55,15 +55,18 @@ export default function RecordGrid({
   const lastDate =
     dates[dates.length - 1];
 
+  const mobileDates =
+    dates.length > 0
+      ? [lastDate]
+      : [];
+
   const stickyCell =
-    "sticky left-0 z-10 border-r border-ink-100";
+  "md:sticky md:left-0 md:z-10 md:border-r md:border-ink-100";
 
   return (
     <Table
-      minWidth={
-        400 + dates.length * 110
-      }
-    >
+  minWidth={320}
+>
       <THead>
         <TH
           className={cn(
@@ -76,10 +79,11 @@ export default function RecordGrid({
 
         <TH>Unit</TH>
 
+        {/* Desktop Dates */}
         {dates.map((d) => (
           <TH
             key={d}
-            className="text-right"
+            className="hidden md:table-cell text-right"
           >
             <span className="inline-flex items-center gap-1.5">
               {formatDisplayDate(d)}
@@ -91,6 +95,16 @@ export default function RecordGrid({
               )}
             </span>
           </TH>
+        ))}
+
+        {/* Mobile Latest */}
+        {mobileDates.map((d) => (
+          <TH
+  key={`mobile-${d}`}
+  className="md:hidden text-right"
+>
+  Stock
+</TH>
         ))}
       </THead>
 
@@ -107,14 +121,14 @@ export default function RecordGrid({
                   "bg-white font-medium text-ink-900"
                 )}
               >
-                <span className="inline-flex items-center gap-2">
+                <span className="flex flex-wrap items-center gap-2">
                   {item.name} (
                   {item.reorder})
 
                   {can(
                     "inventory:manage"
                   ) && (
-                    <span className="inline-flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100">
+                    <span className="hidden md:inline-flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100">
                       <button
                         onClick={() =>
                           onEditItem(
@@ -147,6 +161,7 @@ export default function RecordGrid({
                 {item.unit}
               </TD>
 
+              {/* Desktop Date Columns */}
               {dates.map((d) => {
                 const editable =
                   recording &&
@@ -156,7 +171,7 @@ export default function RecordGrid({
                   return (
                     <TD
                       key={d}
-                      className="text-right"
+                      className="hidden md:table-cell text-right"
                     >
                       <input
                         ref={(el) =>
@@ -228,7 +243,50 @@ export default function RecordGrid({
                   <TD
                     key={d}
                     className={cn(
-                      "text-right tabular-nums",
+                      "hidden md:table-cell text-right tabular-nums",
+                      low &&
+                        "bg-danger-soft/50 font-semibold text-danger"
+                    )}
+                  >
+                    {has ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        {low && (
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                        )}
+
+                        {formatNumber(
+                          qty
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-ink-300">
+                        —
+                      </span>
+                    )}
+                  </TD>
+                );
+              })}
+
+              {/* Mobile Latest Column */}
+              {mobileDates.map((d) => {
+                const has =
+                  d in item.records;
+
+                const qty =
+                  item.records[d];
+
+                const low =
+                  has &&
+                  isLowStock(
+                    qty,
+                    item.reorder
+                  );
+
+                return (
+                  <TD
+                    key={`mobile-${d}`}
+                    className={cn(
+                      "md:hidden text-right tabular-nums",
                       low &&
                         "bg-danger-soft/50 font-semibold text-danger"
                     )}

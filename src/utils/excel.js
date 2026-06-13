@@ -59,73 +59,182 @@ export function exportRawMaterials(groups) {
 export function parseRawMaterialsFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Could not read file"));
+
+    reader.onerror = () =>
+      reject(new Error("Could not read file"));
+
     reader.onload = (e) => {
       try {
-        const wb = XLSX.read(e.target.result, { type: "array" });
+        const wb = XLSX.read(e.target.result, {
+          type: "array",
+        });
+
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+        const rows = XLSX.utils.sheet_to_json(ws, {
+          header: 1,
+        });
 
         const groups = [];
+
         let current = null;
-        let dates = [];
+
+        let itemIndex = -1;
+        let unitIndex = -1;
+        let reorderIndex = -1;
+
+        let dateColumns = [];
 
         for (const row of rows) {
           const cells = (row || []).map((c) =>
-            typeof c === "string" ? c.trim() : c
+            typeof c === "string"
+              ? c.trim()
+              : c
           );
+
           const filled = cells.filter(
-            (c) => c !== null && c !== undefined && c !== ""
+            (c) =>
+              c !== null &&
+              c !== undefined &&
+              c !== ""
           );
 
-          if (filled.length === 0) continue;
+          if (!filled.length) continue;
 
-          if (String(cells[0]) === "Item") {
-            // Header row — date columns start at index 3.
-            dates = cells.slice(3).map(parseHeaderDate);
-            if (current) {
-              for (const d of dates) {
-                if (d && !current.recordDates.includes(d)) {
-                  current.recordDates.push(d);
-                }
+          // ---------- HEADER ROW ----------
+          const lower = cells.map((c) =>
+            String(c || "").toLowerCase()
+          );
+
+          const hasItem =
+            lower.includes("item") ||
+            lower.includes("items");
+
+          if (hasItem) {
+            itemIndex = lower.findIndex(
+              (c) =>
+                c === "item" ||
+                c === "items"
+            );
+
+            unitIndex = lower.findIndex(
+              (c) => c === "unit"
+            );
+
+            reorderIndex = lower.findIndex(
+              (c) =>
+                c === "reorder" ||
+                c === "reorder level"
+            );
+
+            dateColumns = [];
+
+            cells.forEach((cell, idx) => {
+              const d = parseHeaderDate(cell);
+
+              if (d) {
+                dateColumns.push({
+                  index: idx,
+                  date: d,
+                });
               }
+            });
+
+            if (current) {
+              dateColumns.forEach(({ date }) => {
+                if (
+                  !current.recordDates.includes(
+                    date
+                  )
+                ) {
+                  current.recordDates.push(
+                    date
+                  );
+                }
+              });
             }
+
             continue;
           }
 
-          if (filled.length === 1 && cells[0]) {
-            // Single-cell row — a new group.
-            current = { name: String(cells[0]), recordDates: [], items: [] };
-            dates = [];
+          // ---------- GROUP ROW ----------
+          if (
+            filled.length === 1 &&
+            cells[0]
+          ) {
+            current = {
+              name: String(cells[0]),
+              recordDates: [],
+              items: [],
+            };
+
             groups.push(current);
+
             continue;
           }
 
           if (!current) continue;
 
-          // Item row: name | unit | reorder | qty per date.
+          // ---------- ITEM ROW ----------
           const records = [];
-          dates.forEach((d, i) => {
-            const v = cells[3 + i];
-            if (!d || v === "-" || v === "" || v === null || v === undefined)
-              return;
-            const qty = Number(v);
-            if (!Number.isNaN(qty)) records.push({ date: d, qty });
-          });
+
+          dateColumns.forEach(
+            ({ index, date }) => {
+              const value = cells[index];
+
+              if (
+                value === "-" ||
+                value === "" ||
+                value === null ||
+                value === undefined
+              ) {
+                return;
+              }
+
+              const qty =
+                Number(value);
+
+              if (
+                !Number.isNaN(qty)
+              ) {
+                records.push({
+                  date,
+                  qty,
+                });
+              }
+            }
+          );
 
           current.items.push({
-            name: String(cells[0] ?? ""),
-            unit: String(cells[1] ?? "Kg"),
-            reorder: Number(cells[2] ?? 0) || 0,
+            name: String(
+              cells[itemIndex] ?? ""
+            ),
+
+            unit: String(
+              cells[unitIndex] ?? "Kg"
+            ),
+
+            reorder:
+              Number(
+                cells[reorderIndex] ?? 0
+              ) || 0,
+
             records,
           });
         }
 
-        resolve(groups.filter((g) => g.name));
+        resolve(
+          groups.filter(
+            (g) =>
+              g.name &&
+              g.items.length
+          )
+        );
       } catch (err) {
         reject(err);
       }
     };
+
     reader.readAsArrayBuffer(file);
   });
 }

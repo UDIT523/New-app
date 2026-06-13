@@ -12,7 +12,7 @@ import { useInventoryMutations } from "../../hooks/useInventory";
 import { todayISO } from "../../utils/format";
 import RecordGrid from "./RecordGrid";
 
-const DATE_WINDOW = 8;
+const DATE_WINDOW = 6;
 
 /** One collapsible material group: header with actions + the record grid. */
 export default function GroupSection({ group, forceExpand, onEditItem }) {

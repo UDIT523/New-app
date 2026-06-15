@@ -107,15 +107,17 @@ export function parseRawMaterialsFile(file) {
           );
 
           const hasItem =
-            lower.includes("item") ||
-            lower.includes("items");
+  lower.includes("item") ||
+  lower.includes("items") ||
+  lower.includes("item details");
 
           if (hasItem) {
             itemIndex = lower.findIndex(
-              (c) =>
-                c === "item" ||
-                c === "items"
-            );
+  (c) =>
+    c === "item" ||
+    c === "items" ||
+    c === "item details"
+);
 
             unitIndex = lower.findIndex(
               (c) => c === "unit"
@@ -205,22 +207,28 @@ export function parseRawMaterialsFile(file) {
             }
           );
 
-          current.items.push({
-            name: String(
-              cells[itemIndex] ?? ""
-            ),
+         const itemName =
+  itemIndex >= 0
+    ? String(cells[itemIndex] ?? "").trim()
+    : "";
 
-            unit: String(
-              cells[unitIndex] ?? "Kg"
-            ),
+if (!itemName) continue;
 
-            reorder:
-              Number(
-                cells[reorderIndex] ?? 0
-              ) || 0,
+current.items.push({
+  name: itemName,
 
-            records,
-          });
+  unit:
+    unitIndex >= 0
+      ? String(cells[unitIndex] ?? "Kg").trim()
+      : "Kg",
+
+  reorder:
+    reorderIndex >= 0
+      ? Number(cells[reorderIndex] ?? 0) || 0
+      : 0,
+
+  records,
+});
         }
 
         resolve(

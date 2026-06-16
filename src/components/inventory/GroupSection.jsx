@@ -23,7 +23,7 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
   
   const { removeGroup, removeItem, addDate, save } = useInventoryMutations();
 
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [recording, setRecording] = useState(false);
   const [drafts, setDrafts] = useState({});
   const [showAllDates, setShowAllDates] = useState(false);
@@ -140,9 +140,9 @@ export default function GroupSection({ group, forceExpand, onEditItem }) {
           >
             <ChevronRight className="h-4 w-4" />
           </motion.span>
-          <span className="truncate text-base font-semibold tracking-tight text-ink-900">
-            {group.name}
-          </span>
+          <span className="truncate text-lg font-bold tracking-tight text-ink-950">
+  {group.name}
+</span>
           <Badge variant="outline">{group.items.length} items</Badge>
           {lowCount > 0 && <Badge variant="danger">{lowCount} low</Badge>}
         </button>

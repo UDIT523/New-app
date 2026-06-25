@@ -1,14 +1,42 @@
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Users, X, Boxes } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  X,
+  Boxes,
+  Package,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../utils/cn";
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/inventory", label: "Raw Materials", icon: Boxes },
-  { to: "/users", label: "Users", icon: Users, perm: "users:manage" },
-];
+  {
+    to: "/",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    end: true,
+  },
+
+  {
+    to: "/inventory",
+    label: "Raw Materials",
+    icon: Boxes,
+  },
+
+  {
+    to: "/finished-goods",
+    label: "Finished Goods",
+    icon: Package,
+  },
+
+  {
+    to: "/users",
+    label: "Users",
+    icon: Users,
+    perm: "users:manage",
+  },
+]; 
 
 function NavItems({ onNavigate }) {
   const { can } = useAuth();

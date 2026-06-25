@@ -16,9 +16,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 
-// Lazy — heavy authenticated pages (recharts, xlsx) split into their own chunks.
+// Lazy — authenticated pages.
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Inventory = lazy(() => import("./pages/Inventory"));
+const FinishedGoods = lazy(() => import("./pages/FinishedGoods"));
 const Users = lazy(() => import("./pages/Users"));
 
 function PageFallback() {
@@ -45,6 +46,7 @@ export default function App() {
             </PublicOnlyRoute>
           }
         />
+
         <Route
           path="/register"
           element={
@@ -69,6 +71,7 @@ export default function App() {
               </Suspense>
             }
           />
+
           <Route
             path="inventory"
             element={
@@ -77,6 +80,16 @@ export default function App() {
               </Suspense>
             }
           />
+
+          <Route
+            path="finished-goods"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <FinishedGoods />
+              </Suspense>
+            }
+          />
+
           <Route
             path="users"
             element={
@@ -90,8 +103,13 @@ export default function App() {
         </Route>
 
         <Route path="/404" element={<NotFound />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
+
+        <Route
+          path="*"
+          element={<Navigate to="/404" replace />}
+        />
       </Routes>
+
       <InstallPrompt />
     </>
   );

@@ -20,6 +20,7 @@ export default function RecordGrid({
   onCancel,
   onEditItem,
   onDeleteItem,
+  showReorder = true,
 }) {
   const inputRefs = useRef([]);
   const { can } = useAuth();
@@ -122,8 +123,8 @@ export default function RecordGrid({
                 )}
               >
                 <span className="flex flex-wrap items-center gap-2">
-                  {item.name} (
-                  {item.reorder})
+                  {item.name} 
+                  {showReorder && <> ({item.reorder})</>}
 
                   {can(
                     "inventory:manage"
@@ -233,11 +234,12 @@ export default function RecordGrid({
                   item.records[d];
 
                 const low =
-                  has &&
-                  isLowStock(
-                    qty,
-                    item.reorder
-                  );
+  showReorder &&
+  has &&
+  isLowStock(
+    qty,
+    item.reorder
+  );
 
                 return (
                   <TD
@@ -298,9 +300,10 @@ export default function RecordGrid({
 
   const has = d in item.records;
   const qty = item.records[d];
-  const low =
-    has && isLowStock(qty, item.reorder);
-
+ const low =
+  showReorder &&
+  has &&
+  isLowStock(qty, item.reorder);
   return (
     <TD
       key={`mobile-${d}`}
